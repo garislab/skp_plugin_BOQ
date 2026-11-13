@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Tutorial - GC BOQ</title>
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  .gc-tut-layout { display: flex; gap: 18px; align-items: flex-start; }
+  .gc-tut-nav {
+    width: 190px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+  }
+  .gc-tut-nav button {
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gc-muted);
+    cursor: pointer;
+  }
+  .gc-tut-nav button.active {
+    background: var(--gc-accent-soft);
+    color: var(--gc-accent-dark);
+  }
+  .gc-tut-nav button:hover:not(.active) { background: var(--gc-panel-2); color: var(--gc-text); }
+
+  .gc-tut-content { flex: 1; min-width: 0; }
+  .gc-tut-panel { display: none; }
+  .gc-tut-panel.active { display: block; }
+
+  .gc-step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    background: var(--gc-panel);
+    border: 1px solid var(--gc-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: var(--gc-shadow);
+  }
+  .gc-step .num {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--gc-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gc-step .body h3 { margin: 0 0 4px; font-size: 13px; }
+  .gc-step .body p { margin: 0; font-size: 12.5px; color: var(--gc-muted); line-height: 1.6; }
+  .gc-step .body code {
+    background: var(--gc-panel-2);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    color: var(--gc-accent-dark);
+  }
+
+  .gc-tut-content h2 {
+    font-size: 15px;
+    margin: 0 0 12px;
+  }
+
+  .gc-mini-table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 12px; }
+  .gc-mini-table th, .gc-mini-table td {
+    border: 1px solid var(--gc-border);
+    padding: 6px 9px;
+    text-align: left;
+  }
+  .gc-mini-table th { background: var(--gc-panel-2); }
+</style>
+</head>
+<body>
+<div class="gc-app">
+  <div class="gc-header">
+    <div class="gc-header-left">
+      <h1>Tutorial GC BOQ</h1>
+      <div class="gc-subtitle">Panduan penggunaan plugin secara ringkas &amp; lengkap</div>
+    </div>
+    <span class="gc-badge">v1.0.1</span>
+  </div>
+
+  <div class="gc-tut-layout">
+    <div class="gc-tut-nav" id="tutNav"></div>
+    <div class="gc-tut-content">
+
+      <div class="gc-tut-panel" data-panel="mulai">
+        <h2>Memulai</h2>
+        <div class="gc-step">
+          <div class="num">1</div>
+          <div class="body">
+            <h3>Pastikan plugin aktif</h3>
+            <p>Buka <code>Window &gt; Extension Manager</code>, pastikan <b>GC BOQ</b> berstatus aktif (toggle hijau).
+            Menu akan muncul di <code>Extensions &gt; GC BOQ</code>.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">2</div>
+          <div class="body">
+            <h3>Model harus tersusun dari Group / Component</h3>
+            <p>GC BOQ hanya membaca elemen berbentuk <b>Group</b> atau <b>Component Instance</b>.
+            Pastikan dinding, lantai, kolom, dsb masing-masing sudah dijadikan Group/Component
+            (bukan geometri lepas di root model).</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">3</div>
+          <div class="body">
+            <h3>Empat menu utama</h3>
+            <p><b>Seleksi Objek</b> (menandai kategori) &middot; <b>Hitung BOQ Seleksi</b> &middot;
+            <b>Hitung BOQ Semua</b> &middot; <b>Tutorial</b> &amp; <b>Tentang</b>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="gc-tut-panel" data-panel="seleksi">
+        <h2>Cara Menandai &amp; Menyeleksi Objek</h2>
+        <div class="gc-step">
+          <div class="num">1</div>
+          <div class="body">
+            <h3>Pilih elemen di model</h3>
+            <p>Klik satu Group/Component (misalnya satu dinding), atau tahan <code>Ctrl</code>/<code>Shift</code>
+            untuk memilih banyak elemen sejenis sekaligus.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">2</div>
+          <div class="body">
+            <h3>Buka panel Seleksi Objek</h3>
+            <p><code>Extensions &gt; GC BOQ &gt; Seleksi Objek</code>. Panel akan menampilkan jumlah &amp; daftar
+            objek terpilih secara <b>real-time</b> — tidak perlu refresh manual.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">3</div>
+          <div class="body">
+            <h3>Klik kategori untuk menandai</h3>
+            <p>Klik salah satu tombol kategori (Dinding, Lantai, Kolom, dst) di panel. Elemen terpilih otomatis
+            diberi Tag <code>ARS-&lt;Kategori&gt;</code>. Butuh kategori lain (Tangga, Railing, dsb)?
+            Ketik di kolom "Kategori kustom" lalu klik <b>Tandai</b>.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">4</div>
+          <div class="body">
+            <h3>Cara tercepat: klik kanan</h3>
+            <p>Pilih elemen di viewport, klik kanan, pilih submenu <b>GC BOQ &gt; Tandai sebagai</b> —
+            tidak perlu membuka panel sama sekali.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">5</div>
+          <div class="body">
+            <h3>Inventaris &amp; koreksi</h3>
+            <p>Bagian "Inventaris Tertandai" menampilkan semua elemen yang sudah ditandai, dikelompokkan per
+            kategori. Salah tandai? Pilih elemen lalu klik <b>Hapus Penanda dari Seleksi</b>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="gc-tut-panel" data-panel="hitung">
+        <h2>Cara Menghitung BOQ</h2>
+        <div class="gc-step">
+          <div class="num">1</div>
+          <div class="body">
+            <h3>Pilih mode</h3>
+            <p><b>Hitung BOQ Seleksi</b> — hanya elemen yang sedang dipilih. <b>Hitung BOQ Semua</b> — seluruh
+            model. Bisa juga berpindah mode langsung dari tombol toggle di jendela hasil.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">2</div>
+          <div class="body">
+            <h3>Membaca hasil</h3>
+            <p>Kartu besar di <b>atas</b> menunjukkan Total Keseluruhan (Jumlah, Volume, Luas). Di bawahnya,
+            hasil dikelompokkan <b>per kategori</b> — tiap kategori punya subtotal sendiri pada judul
+            baris (klik untuk buka/tutup daftar detail). Di paling <b>bawah</b> ditampilkan lagi Total
+            Keseluruhan sebagai rekap akhir.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">3</div>
+          <div class="body">
+            <h3>Verifikasi elemen</h3>
+            <p>Klik baris mana pun pada tabel detail untuk otomatis memilih &amp; zoom ke elemen tersebut di
+            model — berguna untuk mengecek elemen yang nilainya janggal.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">4</div>
+          <div class="body">
+            <h3>Cari, urutkan, ekspor</h3>
+            <p>Gunakan kolom pencarian untuk menyaring berdasarkan nama/tag/kategori/Entity ID. Klik judul
+            kolom tabel untuk mengurutkan. Tombol <b>Export CSV</b> menyimpan seluruh data (mengikuti filter
+            pencarian aktif) untuk dibuka di Excel/Google Sheets.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="gc-tut-panel" data-panel="metodologi">
+        <h2>Metodologi Perhitungan</h2>
+        <p style="font-size:12.5px; color:var(--gc-muted); line-height:1.6;">
+          Setiap kategori punya definisi "Luas" yang berbeda agar satu kolom Luas tetap bermakna untuk semua
+          jenis elemen:
+        </p>
+        <table class="gc-mini-table">
+          <thead><tr><th>Kategori</th><th>Definisi Luas</th></tr></thead>
+          <tbody>
+            <tr><td>Dinding, Kolom, Balok, Pintu, Jendela</td><td>Luas permukaan vertikal (1 sisi, asumsi sisi depan = belakang)</td></tr>
+            <tr><td>Lantai, Atap</td><td>Luas permukaan yang menghadap ke atas</td></tr>
+            <tr><td>Plafon</td><td>Luas permukaan yang menghadap ke bawah</td></tr>
+            <tr><td>Lainnya / kustom</td><td>Nilai terbesar antara luas vertikal/atas/bawah, atau separuh luas total permukaan bila tidak terdeteksi arah dominan</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12.5px; color:var(--gc-muted); line-height:1.6;">
+          <b>Volume</b> dihitung dari mesh tertutup elemen (teorema divergensi), bekerja untuk Group maupun
+          Component Instance. Untuk elemen yang bukan solid tertutup sempurna, hasil bersifat perkiraan.
+          <b>Dimensi P/L/T</b> diambil dari bounding box global elemen — cocok sebagai referensi ukuran, bukan
+          ukuran presisi untuk elemen yang diputar miring.
+        </p>
+        <p style="font-size:12.5px; color:var(--gc-muted); line-height:1.6;">
+          Group/Component yang hanya berfungsi sebagai folder pengelompokan (tidak berisi Face langsung) otomatis
+          "ditembus" sehingga elemen di dalamnya tetap terhitung. Elemen yang disembunyikan (hidden) atau berada
+          pada Tag non-aktif tidak ikut dihitung.
+        </p>
+      </div>
+
+      <div class="gc-tut-panel" data-panel="tips">
+        <h2>Tips &amp; Troubleshooting</h2>
+        <div class="gc-step">
+          <div class="num">!</div>
+          <div class="body">
+            <h3>Elemen masuk kategori "Lainnya"</h3>
+            <p>Berarti belum ditandai memakai Tag <code>ARS-</code> dan namanya tidak mengandung kata kunci
+            baku (dinding, lantai, dst). Tandai manual lewat panel Seleksi Objek atau klik kanan.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">!</div>
+          <div class="body">
+            <h3>Volume tampil 0 atau kecil sekali</h3>
+            <p>Kemungkinan elemen bukan solid tertutup (ada celah/lubang pada mesh). Cek dengan
+            <code>Solid Inspector</code> atau pastikan seluruh permukaan tertutup sempurna.</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">!</div>
+          <div class="body">
+            <h3>Hasil berbeda dari perkiraan manual</h3>
+            <p>Cek dahulu kategori elemen (menentukan definisi Luas yang dipakai) dan pastikan elemen tidak
+            bertumpuk/duplikat (misalnya group dinding ter-copy tanpa sadar).</p>
+          </div>
+        </div>
+        <div class="gc-step">
+          <div class="num">!</div>
+          <div class="body">
+            <h3>Panel Seleksi Objek tidak update</h3>
+            <p>Pastikan panel dalam keadaan terbuka &amp; tidak diminimize; klik tombol <b>Refresh</b> pada
+            bagian Inventaris jika daftar tag tidak berubah setelah edit di luar panel.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const panels = ['mulai', 'seleksi', 'hitung', 'metodologi', 'tips'];
+const labels = {
+  mulai: 'Memulai',
+  seleksi: 'Seleksi Objek',
+  hitung: 'Menghitung BOQ',
+  metodologi: 'Metodologi',
+  tips: 'Tips & Isu Umum'
+};
+
+function showPanel(name) {
+  document.querySelectorAll('.gc-tut-panel').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-panel') === name);
+  });
+  document.querySelectorAll('#tutNav button').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-panel') === name);
+  });
+}
+
+const nav = document.getElementById('tutNav');
+panels.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.textContent = labels[p];
+  btn.setAttribute('data-panel', p);
+  btn.addEventListener('click', () => showPanel(p));
+  nav.appendChild(btn);
+});
+showPanel('mulai');
+</script>
+</body>
+</html>

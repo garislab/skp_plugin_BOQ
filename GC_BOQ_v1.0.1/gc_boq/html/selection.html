@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Seleksi Objek - GC BOQ</title>
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  .gc-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .gc-cat-btn {
+    background: var(--gc-panel);
+    border: 1px solid var(--gc-border);
+    border-radius: 9px;
+    padding: 9px 10px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gc-text);
+    transition: all .12s ease;
+  }
+  .gc-cat-btn:hover {
+    border-color: var(--gc-accent);
+    background: var(--gc-accent-soft);
+    color: var(--gc-accent-dark);
+  }
+  .gc-cat-btn .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--gc-accent);
+    margin-right: 7px;
+  }
+
+  .gc-sel-list, .gc-inv-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--gc-border);
+    border-radius: 9px;
+    background: var(--gc-panel);
+  }
+  .gc-sel-row, .gc-inv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--gc-border);
+    cursor: pointer;
+  }
+  .gc-sel-row:last-child, .gc-inv-row:last-child { border-bottom: none; }
+  .gc-sel-row:hover, .gc-inv-row:hover { background: var(--gc-row-hover); }
+  .gc-sel-row .nm, .gc-inv-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gc-sel-row .meta { color: var(--gc-muted); font-size: 10.5px; white-space: nowrap; margin-left: 8px; }
+
+  .gc-custom-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+  details.gc-cat-group { margin-bottom: 8px; }
+  details.gc-cat-group summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 8px 10px;
+    background: var(--gc-panel-2);
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+  }
+  details.gc-cat-group summary::-webkit-details-marker { display: none; }
+  details.gc-cat-group summary .count { color: var(--gc-muted); font-weight: 500; }
+
+  .gc-actions-row { display: flex; gap: 8px; margin-top: 14px; }
+  .gc-actions-row .gc-btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="gc-app">
+  <div class="gc-header">
+    <div class="gc-header-left">
+      <h1>Seleksi Objek</h1>
+      <div class="gc-subtitle">Tandai elemen model dengan kategori arsitektur</div>
+    </div>
+    <span class="gc-badge">GC BOQ</span>
+  </div>
+
+  <div class="gc-section-title">Objek Terpilih (<span id="selCount">0</span>)</div>
+  <div class="gc-sel-list" id="selList"></div>
+
+  <div class="gc-section-title">Tandai Seleksi Sebagai</div>
+  <div class="gc-cat-grid" id="catGrid"></div>
+
+  <div class="gc-custom-row">
+    <input type="text" class="gc-input grow" id="customCat" placeholder="Kategori kustom (mis. Tangga, Railing)...">
+    <button class="gc-btn gc-secondary small" id="btnCustom">Tandai</button>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <button class="gc-btn gc-danger small" id="btnClear">Hapus Penanda dari Seleksi</button>
+  </div>
+
+  <div class="gc-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Inventaris Tertandai</span>
+    <button class="gc-btn gc-ghost small" id="btnRefresh">Refresh</button>
+  </div>
+  <div id="invContainer"></div>
+
+  <div class="gc-actions-row">
+    <button class="gc-btn gc-secondary" id="btnCalcSel">Hitung BOQ Seleksi</button>
+    <button class="gc-btn" id="btnCalcAll">Hitung BOQ Semua</button>
+  </div>
+
+  <div class="gc-footer-note">
+    Tip: elemen yang ditandai memakai Tag <b>ARS-&lt;Kategori&gt;</b>. Klik baris pada daftar
+    untuk memilih &amp; zoom ke elemen tersebut di model.
+  </div>
+</div>
+
+<script src="shared/util.js"></script>
+<script>
+const GCSelection = (function () {
+  let categories = [];
+
+  function renderCatGrid() {
+    const el = document.getElementById('catGrid');
+    el.innerHTML = '';
+    categories.forEach(cat => {
+      const btn = document.createElement('div');
+      btn.className = 'gc-cat-btn';
+      btn.innerHTML = `<span class="dot"></span>${gcEscape(cat)}`;
+      btn.addEventListener('click', () => window.sketchup.assign_category(cat));
+      el.appendChild(btn);
+    });
+  }
+
+  function renderSelection(data) {
+    document.getElementById('selCount').textContent = data.jumlah;
+    const list = document.getElementById('selList');
+    list.innerHTML = '';
+    if (!data.elemen.length) {
+      list.innerHTML = '<div class="gc-empty">Belum ada objek terpilih di model.</div>';
+      return;
+    }
+    data.elemen.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'gc-sel-row';
+      row.innerHTML = `
+        <span class="nm">${gcEscape(e.nama)}</span>
+        <span class="meta">${gcEscape(e.kategori)} &middot; #${e.id}</span>
+      `;
+      row.addEventListener('click', () => window.sketchup.select_entity(e.id));
+      list.appendChild(row);
+    });
+  }
+
+  function renderInventory(inv) {
+    const container = document.getElementById('invContainer');
+    container.innerHTML = '';
+    const cats = Object.keys(inv);
+    if (!cats.length) {
+      container.innerHTML = '<div class="gc-empty">Belum ada elemen yang ditandai.</div>';
+      return;
+    }
+    cats.forEach(cat => {
+      const items = inv[cat];
+      const details = document.createElement('details');
+      details.className = 'gc-cat-group';
+      details.open = false;
+      const summary = document.createElement('summary');
+      summary.innerHTML = `<span>${gcEscape(cat)}</span><span class="count">${items.length} elemen</span>`;
+      details.appendChild(summary);
+
+      const listDiv = document.createElement('div');
+      listDiv.className = 'gc-inv-list';
+      items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'gc-inv-row';
+        row.innerHTML = `<span class="nm">${gcEscape(it.nama)}</span><span class="meta">#${it.id}</span>`;
+        row.addEventListener('click', () => window.sketchup.select_entity(it.id));
+        listDiv.appendChild(row);
+      });
+      details.appendChild(listDiv);
+      container.appendChild(details);
+    });
+  }
+
+  function init(data) {
+    categories = data.categories;
+    renderCatGrid();
+    renderSelection(data.selection);
+    renderInventory(data.inventory);
+  }
+
+  function updateSelection(data) { renderSelection(data); }
+  function updateInventory(inv) { renderInventory(inv); }
+
+  return { init, updateSelection, updateInventory };
+})();
+
+document.getElementById('btnCustom').addEventListener('click', () => {
+  const val = document.getElementById('customCat').value.trim();
+  if (!val) return;
+  window.sketchup.assign_category(val);
+  document.getElementById('customCat').value = '';
+});
+document.getElementById('customCat').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter') document.getElementById('btnCustom').click();
+});
+document.getElementById('btnClear').addEventListener('click', () => window.sketchup.clear_category());
+document.getElementById('btnRefresh').addEventListener('click', () => window.sketchup.refresh_inventory());
+document.getElementById('btnCalcSel').addEventListener('click', () => window.sketchup.open_calculate('selection'));
+document.getElementById('btnCalcAll').addEventListener('click', () => window.sketchup.open_calculate('model'));
+
+document.addEventListener('DOMContentLoaded', () => window.sketchup.ready());
+</script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Hitung BOQ - GC BOQ</title>
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  .gc-mode-toggle {
+    display: flex;
+    background: var(--gc-panel-2);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .gc-mode-toggle button {
+    border: none;
+    background: transparent;
+    padding: 6px 13px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gc-muted);
+    cursor: pointer;
+  }
+  .gc-mode-toggle button.active {
+    background: var(--gc-panel);
+    color: var(--gc-accent-dark);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  .gc-total-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .gc-total-card {
+    flex: 1;
+    background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-dark));
+    color: #fff;
+    border-radius: var(--gc-radius);
+    padding: 12px 16px;
+    box-shadow: var(--gc-shadow);
+  }
+  .gc-total-card.alt {
+    background: linear-gradient(135deg, #2c3440, #1b212a);
+  }
+  .gc-total-card .lbl {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+  }
+  .gc-total-card .val {
+    font-size: 20px;
+    font-weight: 800;
+    margin-top: 3px;
+    letter-spacing: -0.01em;
+  }
+  .gc-total-card .val small { font-size: 12px; font-weight: 600; opacity: 0.85; }
+
+  details.gc-cat-section {
+    margin-bottom: 10px;
+  }
+  details.gc-cat-section summary {
+    list-style: none;
+    cursor: pointer;
+    background: var(--gc-panel);
+    border: 1px solid var(--gc-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--gc-shadow);
+  }
+  details.gc-cat-section summary::-webkit-details-marker { display: none; }
+  details.gc-cat-section summary::before {
+    content: '▸';
+    margin-right: 8px;
+    color: var(--gc-accent);
+    transition: transform .12s ease;
+  }
+  details.gc-cat-section[open] summary::before { transform: rotate(90deg); }
+  details.gc-cat-section summary .cat-name { font-weight: 700; font-size: 13px; }
+  details.gc-cat-section summary .cat-sub {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--gc-muted);
+  }
+  details.gc-cat-section summary .cat-sub b { color: var(--gc-text); }
+  details.gc-cat-section .gc-table-wrap {
+    border: 1px solid var(--gc-border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+    background: var(--gc-panel);
+  }
+
+  #bottomTotal {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 2px dashed var(--gc-border);
+  }
+  #bottomTotal .gc-section-title { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="gc-app">
+  <div class="gc-header">
+    <div class="gc-header-left">
+      <h1>Hasil Perhitungan BOQ</h1>
+      <div class="gc-subtitle" id="modeLabel">Sumber data</div>
+    </div>
+    <div class="gc-mode-toggle">
+      <button id="btnModeSel">Seleksi</button>
+      <button id="btnModeAll">Semua Model</button>
+    </div>
+  </div>
+
+  <div class="gc-toolbar">
+    <input type="text" class="gc-input grow" id="searchBox" placeholder="Cari nama, tag, kategori, atau Entity ID...">
+    <button class="gc-btn gc-secondary" id="btnExport">Export CSV</button>
+  </div>
+
+  <div class="gc-total-bar" id="topTotal"></div>
+
+  <div id="sections"></div>
+  <div class="gc-empty" id="emptyState" style="display:none;">Tidak ada baris yang cocok dengan pencarian.</div>
+
+  <div id="bottomTotal">
+    <div class="gc-section-title">Total Keseluruhan</div>
+    <div class="gc-total-bar" id="bottomTotalCards"></div>
+  </div>
+
+  <div class="gc-footer-note">
+    Klik baris untuk memilih &amp; zoom ke elemen di model &middot; Klik header kolom untuk mengurutkan &middot;
+    Kolom Luas otomatis mengikuti orientasi elemen (dinding/kolom &amp; sejenis = luas permukaan vertikal 1 sisi;
+    lantai/atap = luas permukaan atas; plafon = luas permukaan bawah).
+  </div>
+</div>
+
+<script src="shared/util.js"></script>
+<script>
+const GCCalc = (function () {
+  let allRows = [];
+  let summary = {};
+  let total = {};
+  let currentMode = 'model';
+  let sortKey = 'nama';
+  let sortAsc = true;
+
+  function totalCardsHTML(t, altSecond) {
+    return `
+      <div class="gc-total-card">
+        <div class="lbl">Jumlah Elemen</div>
+        <div class="val">${t.jumlah}</div>
+      </div>
+      <div class="gc-total-card ${altSecond ? 'alt' : ''}">
+        <div class="lbl">Total Volume</div>
+        <div class="val">${gcFmt(t.volume)} <small>m3</small></div>
+      </div>
+      <div class="gc-total-card ${altSecond ? 'alt' : ''}">
+        <div class="lbl">Total Luas</div>
+        <div class="val">${gcFmt(t.luas)} <small>m2</small></div>
+      </div>`;
+  }
+
+  function renderTotals() {
+    document.getElementById('topTotal').innerHTML = totalCardsHTML(total, false);
+    document.getElementById('bottomTotalCards').innerHTML = totalCardsHTML(total, true);
+  }
+
+  function filteredRowsForCategory(cat) {
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    let rows = allRows.filter(r => r.kategori === cat);
+    if (q) {
+      rows = rows.filter(r =>
+        String(r.id).includes(q) ||
+        r.nama.toLowerCase().includes(q) ||
+        r.tag.toLowerCase().includes(q) ||
+        r.kategori.toLowerCase().includes(q)
+      );
+    }
+    rows.sort((a, b) => {
+      let va = a[sortKey], vb = b[sortKey];
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+    return rows;
+  }
+
+  function rowHTML(r) {
+    return `
+      <tr data-id="${r.id}">
+        <td class="gc-idcol">#${r.id}</td>
+        <td>${gcEscape(r.nama)}</td>
+        <td>${gcEscape(r.tag)}</td>
+        <td class="gc-num">${gcFmt(r.volume)}</td>
+        <td class="gc-num">${gcFmt(r.luas)}</td>
+        <td class="gc-num">${gcFmt(r.panjang)}</td>
+        <td class="gc-num">${gcFmt(r.lebar)}</td>
+        <td class="gc-num">${gcFmt(r.tinggi)}</td>
+      </tr>`;
+  }
+
+  function renderSections() {
+    const container = document.getElementById('sections');
+    container.innerHTML = '';
+    const q = document.getElementById('searchBox').value.trim();
+    let anyVisible = false;
+
+    Object.keys(summary).forEach(cat => {
+      const rows = filteredRowsForCategory(cat);
+      if (!rows.length) return;
+      anyVisible = true;
+      const s = summary[cat];
+
+      const details = document.createElement('details');
+      details.className = 'gc-cat-section';
+      details.open = !!q || Object.keys(summary).length <= 3;
+
+      details.innerHTML = `
+        <summary>
+          <span class="cat-name">${gcEscape(cat)}</span>
+          <span class="cat-sub">
+            <span>Jumlah: <b>${s.jumlah}</b></span>
+            <span>Volume: <b>${gcFmt(s.volume)}</b> m3</span>
+            <span>Luas: <b>${gcFmt(s.luas)}</b> m2</span>
+          </span>
+        </summary>
+        <div class="gc-table-wrap">
+          <table class="gc-table">
+            <thead>
+              <tr>
+                <th data-key="id">ID</th>
+                <th data-key="nama">Nama</th>
+                <th data-key="tag">Tag</th>
+                <th data-key="volume" class="gc-num">Volume (m3)</th>
+                <th data-key="luas" class="gc-num">Luas (m2)</th>
+                <th data-key="panjang" class="gc-num">P (m)</th>
+                <th data-key="lebar" class="gc-num">L (m)</th>
+                <th data-key="tinggi" class="gc-num">T (m)</th>
+              </tr>
+            </thead>
+            <tbody>${rows.map(rowHTML).join('')}</tbody>
+          </table>
+        </div>`;
+
+      details.querySelectorAll('thead th').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-key');
+          if (sortKey === key) { sortAsc = !sortAsc; } else { sortKey = key; sortAsc = true; }
+          renderSections();
+        });
+      });
+      details.querySelectorAll('tbody tr').forEach(tr => {
+        tr.addEventListener('click', () => window.sketchup.select_entity(tr.getAttribute('data-id')));
+      });
+
+      container.appendChild(details);
+    });
+
+    document.getElementById('emptyState').style.display = anyVisible ? 'none' : 'block';
+  }
+
+  function toCSV() {
+    const header = ['EntityID','Kategori','Nama','Tag','Volume_m3','Luas_m2','Panjang_m','Lebar_m','Tinggi_m'];
+    const lines = [header.join(';')];
+    allRows.forEach(r => {
+      lines.push([r.id, r.kategori, r.nama, r.tag, r.volume, r.luas, r.panjang, r.lebar, r.tinggi].join(';'));
+    });
+    return lines.join('\n');
+  }
+
+  function updateModeButtons() {
+    document.getElementById('btnModeSel').classList.toggle('active', currentMode === 'selection');
+    document.getElementById('btnModeAll').classList.toggle('active', currentMode === 'model');
+    document.getElementById('modeLabel').textContent =
+      currentMode === 'selection' ? 'Sumber: Seleksi Saat Ini' : 'Sumber: Seluruh Model';
+  }
+
+  function loadData(data) {
+    allRows = data.rows;
+    summary = data.summary;
+    total = data.total;
+    currentMode = data.mode;
+    updateModeButtons();
+    renderTotals();
+    renderSections();
+  }
+
+  function onSearch() { renderSections(); }
+  function exportCsv() { window.sketchup.export_csv(toCSV()); }
+
+  return { loadData, onSearch, exportCsv };
+})();
+
+document.getElementById('searchBox').addEventListener('input', () => GCCalc.onSearch());
+document.getElementById('btnExport').addEventListener('click', () => GCCalc.exportCsv());
+document.getElementById('btnModeSel').addEventListener('click', () => window.sketchup.recalculate('selection'));
+document.getElementById('btnModeAll').addEventListener('click', () => window.sketchup.recalculate('model'));
+
+document.addEventListener('DOMContentLoaded', () => window.sketchup.ready());
+</script>
+</body>
+</html>

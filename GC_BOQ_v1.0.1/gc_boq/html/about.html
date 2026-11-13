@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Tentang GC BOQ</title>
+<style>
+  :root {
+    --gc-text: #22262b;
+    --gc-muted: #6f7681;
+    --gc-accent: #e2661c;
+    --gc-border: #e6e8ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 18px 20px;
+    background: #ffffff;
+    color: var(--gc-text);
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    font-size: 12.5px;
+  }
+  a { color: var(--gc-accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .gc-about-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .gc-about-head img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    margin-top: 2px;
+  }
+  .gc-brand-small {
+    font-size: 10.5px;
+    color: var(--gc-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .gc-brand-name {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--gc-text);
+    letter-spacing: -0.01em;
+  }
+
+  .gc-about-body {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-top: 4px;
+    border-top: 1px solid var(--gc-border);
+  }
+  .gc-info-col { line-height: 2; }
+  .gc-info-col .row { white-space: nowrap; }
+  .gc-info-col .row b { font-weight: 600; }
+
+  .gc-links-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 2px;
+    text-align: right;
+    min-width: 130px;
+  }
+  .gc-links-col a { cursor: pointer; }
+
+  .gc-about-footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gc-border);
+    font-size: 10.5px;
+    color: var(--gc-muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="gc-about-head">
+    <img src="images/gc_logo.png" alt="Garis Cerita">
+    <div>
+      <div class="gc-brand-small">R&amp;D Garis Cerita</div>
+      <div class="gc-brand-name">GC BOQ&trade;</div>
+    </div>
+  </div>
+
+  <div class="gc-about-body">
+    <div class="gc-info-col">
+      <div class="row"><a href="#" id="linkSite">www.gariscerita.com</a></div>
+      <div class="row">GC BOQ version - <b>1.0.1</b></div>
+      <div class="row">Build date - <b>23/07/2026 10:00 (WIB)</b></div>
+      <div class="row">Copyright &copy; 2026 Garis Cerita</div>
+      <div class="row">All rights reserved</div>
+      <div class="row"><a href="#" id="linkLicense">Ketentuan lisensi internal</a></div>
+    </div>
+    <div class="gc-links-col">
+      <a id="linkUpdate">Cek Pembaruan</a>
+      <a id="linkVisit">Kunjungi Garis Cerita</a>
+      <a id="linkTutorial">Buka Tutorial</a>
+    </div>
+  </div>
+
+  <div class="gc-about-footer">
+    Dikembangkan oleh Tim R&amp;D Garis Cerita untuk mempercepat perhitungan BOQ arsitektur di SketchUp.
+  </div>
+
+<script>
+  document.getElementById('linkTutorial').addEventListener('click', () => window.sketchup.open_tutorial());
+  document.getElementById('linkSite').addEventListener('click', (e) => { e.preventDefault(); window.sketchup.open_url('https://www.gariscerita.com'); });
+  document.getElementById('linkVisit').addEventListener('click', () => window.sketchup.open_url('https://www.gariscerita.com'));
+  document.getElementById('linkUpdate').addEventListener('click', () => window.sketchup.open_url('https://www.gariscerita.com'));
+  document.getElementById('linkLicense').addEventListener('click', (e) => { e.preventDefault(); });
+</script>
+</body>
+</html>
